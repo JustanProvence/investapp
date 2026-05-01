@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Linux venv (created in Docker/WSL)
+.venv-linux/
+
+# Shell and editor artifacts
+.bash_history
+.claude.json

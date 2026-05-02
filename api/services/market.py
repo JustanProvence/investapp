@@ -116,11 +116,13 @@ def get_fundamentals(ticker: str) -> dict | None:
         # Detect when Finnhub maps a preferred/derivative ticker to a different
         # underlying common-stock issuer (e.g. STRC → MSTR).
         issuer_ticker = None
+        finnhub_industry = None
         try:
             profile = _client.company_profile2(symbol=ticker)
             profile_ticker = (profile.get("ticker") or "").upper()
             if profile_ticker and profile_ticker != ticker.upper():
                 issuer_ticker = profile_ticker
+            finnhub_industry = profile.get("finnhubIndustry") or None
         except Exception:
             pass
 
@@ -142,7 +144,8 @@ def get_fundamentals(ticker: str) -> dict | None:
                 div_yield = div_rate / price * 100
                 dps       = div_rate
 
-        is_utility = "util" in (yf_info.get("sector") or "").lower()
+        sector     = finnhub_industry or yf_info.get("sector") or None
+        is_utility = "util" in (sector or "").lower()
 
         ebitda     = yf_info.get("ebitda")
         total_debt = yf_info.get("totalDebt")
@@ -171,6 +174,7 @@ def get_fundamentals(ticker: str) -> dict | None:
             "debt_ebitda":        debt_ebitda,
             "current_ratio":      m.get("currentRatioAnnual"),
             "beta":               m.get("beta"),
+            "sector":             sector,
             "is_preferred":       is_preferred,
             "is_utility":         is_utility,
             "issuer_ticker":      issuer_ticker,

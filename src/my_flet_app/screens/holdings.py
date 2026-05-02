@@ -2,8 +2,9 @@ import asyncio
 import flet as ft
 from my_flet_app import routes, theme as t, api_client
 from my_flet_app.components.bottom_nav import build_nav_bar
+from my_flet_app.components.app_bar import build_app_bar
 
-_QUICK_CHIPS = ["AAPL", "MSFT", "O", "TSLA"]
+_QUICK_CHIPS = ["OVL", "QQQI", "GPIQ", "O", "BTCI", "SGOV"]
 _NAV_DEST    = [routes.SUMMARY, routes.HOLDINGS, routes.SETTINGS]
 
 _STATUS_MAP = {
@@ -121,7 +122,8 @@ def holdings_view(page: ft.Page) -> ft.View:
         card: list[ft.Container] = [None]
 
         async def _delete(_):
-            ok = await api_client.delete_holding(ticker)
+            uid = (page.session.store.get("user") or {}).get("id", "")
+            ok = await api_client.delete_holding(ticker, uid)
             if ok and card[0] in cards_col.controls:
                 cards_col.controls.remove(card[0])
                 page.update()
@@ -215,7 +217,8 @@ def holdings_view(page: ft.Page) -> ft.View:
         return card[0]
 
     async def load():
-        summary = await api_client.get_portfolio_summary()
+        uid     = (page.session.store.get("user") or {}).get("id", "")
+        summary = await api_client.get_portfolio_summary(uid)
         if not summary or not summary.get("holdings"):
             cards_col.controls = [ft.Container(
                 padding=ft.padding.all(t.LG),
@@ -242,23 +245,16 @@ def holdings_view(page: ft.Page) -> ft.View:
                 expand=True,
                 spacing=0,
                 controls=[
+                    build_app_bar(),
                     ft.Container(
                         padding=ft.padding.only(
                             left=t.CONTAINER_MARGIN, right=t.CONTAINER_MARGIN,
-                            top=t.LG + t.SM, bottom=t.MD,
+                            top=t.MD, bottom=t.MD,
                         ),
-                        content=ft.Row(
-                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                            controls=[
-                                ft.Text("Holdings", size=26,
+                        content=ft.Text("Holdings", size=26,
                                         weight=ft.FontWeight.W_700,
                                         color=t.ON_SURFACE,
                                         font_family=t.FONT_FAMILY),
-                                ft.IconButton(ft.Icons.NOTIFICATIONS_OUTLINED,
-                                              icon_color=t.ON_SURFACE, icon_size=22),
-                            ],
-                        ),
                     ),
                     ft.Container(
                         padding=ft.padding.symmetric(horizontal=t.CONTAINER_MARGIN),
@@ -380,7 +376,7 @@ def ticker_detail_view(page: ft.Page, holding_id: str) -> ft.View:
                 ),
                 ft.Container(height=t.XS),
                 ft.Text(
-                    "WealthShield Health Analysis: Based on trailing data "
+                    "Market Research Health Analysis: Based on trailing data "
                     "and current valuation metrics.",
                     size=12, color=t.ON_SURFACE_VARIANT,
                     font_family=t.FONT_FAMILY,
@@ -675,7 +671,8 @@ def add_ticker_view(page: ft.Page) -> ft.View:
             page.update()
             return
 
-        result = await api_client.add_holding(ticker, shares, cost)
+        uid    = (page.session.store.get("user") or {}).get("id", "")
+        result = await api_client.add_holding(ticker, shares, cost, uid)
         if result:
             await page.push_route(routes.HOLDINGS)
         else:
@@ -878,7 +875,7 @@ def add_ticker_view(page: ft.Page) -> ft.View:
                                             ft.Icon(ft.Icons.INFO_OUTLINE, size=20,
                                                     color=t.ON_SURFACE_VARIANT),
                                             ft.Text(
-                                                "WealthShield uses real-time market data "
+                                                "Market Research uses real-time market data "
                                                 "to calculate your portfolio's health score "
                                                 "and defensive rating.",
                                                 size=12, color=t.ON_SURFACE_VARIANT,
@@ -941,13 +938,14 @@ def update_holding_view(page: ft.Page, ticker: str = "") -> ft.View:
                                 color=t.ON_SURFACE, font_family=t.FONT_FAMILY)
 
     async def prefill():
-        holding = await api_client.get_holdings()
+        uid     = (page.session.store.get("user") or {}).get("id", "")
+        holding = await api_client.get_holdings(uid)
         match = next((h for h in holding if h["ticker"] == ticker), None)
         if match:
             shares_field.value = str(match["shares"])
             cost_field.value   = str(match["cost_basis"])
             shares_info_text.value = str(match["shares"])
-        summary = await api_client.get_portfolio_summary()
+        summary = await api_client.get_portfolio_summary(uid)
         if summary:
             h = next((h for h in summary["holdings"] if h["ticker"] == ticker), None)
             if h:
@@ -968,7 +966,8 @@ def update_holding_view(page: ft.Page, ticker: str = "") -> ft.View:
             cost   = float(cost_field.value or "0")
         except ValueError:
             return
-        result = await api_client.update_holding(ticker, shares, cost)
+        uid    = (page.session.store.get("user") or {}).get("id", "")
+        result = await api_client.update_holding(ticker, shares, cost, uid)
         if result:
             await page.push_route(routes.ticker(ticker))
 
@@ -1028,7 +1027,7 @@ def update_holding_view(page: ft.Page, ticker: str = "") -> ft.View:
                                         header_text,
                                     ],
                                 ),
-                                ft.Text("WealthShield", size=14,
+                                ft.Text("Market Research", size=14,
                                         weight=ft.FontWeight.W_600,
                                         color=t.ON_SURFACE,
                                         font_family=t.FONT_FAMILY),

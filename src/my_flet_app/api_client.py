@@ -10,67 +10,95 @@ _TIMEOUT = 20.0
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
-async def _get(path: str):
+def _auth(user_id: str) -> dict:
+    return {"X-User-Id": user_id}
+
+
+async def _get(path: str, headers: dict | None = None):
     async with httpx.AsyncClient() as c:
-        r = await c.get(f"{_BASE}{path}", timeout=_TIMEOUT)
+        r = await c.get(f"{_BASE}{path}", timeout=_TIMEOUT, headers=headers or {})
         r.raise_for_status()
         return r.json()
 
 
-async def _post(path: str, body: dict):
+async def _post(path: str, body: dict, headers: dict | None = None):
     async with httpx.AsyncClient() as c:
-        r = await c.post(f"{_BASE}{path}", json=body, timeout=_TIMEOUT)
+        r = await c.post(f"{_BASE}{path}", json=body, timeout=_TIMEOUT, headers=headers or {})
         r.raise_for_status()
         return r.json()
 
 
-async def _put(path: str, body: dict):
+async def _put(path: str, body: dict, headers: dict | None = None):
     async with httpx.AsyncClient() as c:
-        r = await c.put(f"{_BASE}{path}", json=body, timeout=_TIMEOUT)
+        r = await c.put(f"{_BASE}{path}", json=body, timeout=_TIMEOUT, headers=headers or {})
         r.raise_for_status()
         return r.json()
 
 
-async def _delete(path: str):
+async def _patch(path: str, body: dict, headers: dict | None = None):
     async with httpx.AsyncClient() as c:
-        r = await c.delete(f"{_BASE}{path}", timeout=_TIMEOUT)
+        r = await c.patch(f"{_BASE}{path}", json=body, timeout=_TIMEOUT, headers=headers or {})
         r.raise_for_status()
         return r.json()
+
+
+async def _delete(path: str, headers: dict | None = None):
+    async with httpx.AsyncClient() as c:
+        r = await c.delete(f"{_BASE}{path}", timeout=_TIMEOUT, headers=headers or {})
+        r.raise_for_status()
+        return r.json()
+
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+
+async def login(email: str) -> dict | None:
+    """Returns user dict on success, None if email not recognised."""
+    try:
+        return await _post("/auth/login", {"email": email})
+    except Exception:
+        return None
+
+
+async def set_theme_preference(mode: str, user_id: str) -> None:
+    try:
+        await _patch("/auth/preferences", {"theme_mode": mode}, headers=_auth(user_id))
+    except Exception:
+        pass
 
 
 # ── Holdings ──────────────────────────────────────────────────────────────────
 
-async def get_holdings() -> list[dict]:
+async def get_holdings(user_id: str) -> list[dict]:
     """Returns list of {ticker, shares, cost_basis}."""
     try:
-        return await _get("/holdings")
+        return await _get("/holdings", headers=_auth(user_id))
     except Exception:
         return []
 
 
-async def add_holding(ticker: str, shares: float, cost_basis: float) -> dict | None:
+async def add_holding(ticker: str, shares: float, cost_basis: float, user_id: str) -> dict | None:
     """Returns saved holding or None on error (e.g. duplicate)."""
     try:
         return await _post("/holdings", {
             "ticker": ticker, "shares": shares, "cost_basis": cost_basis,
-        })
+        }, headers=_auth(user_id))
     except Exception:
         return None
 
 
-async def update_holding(ticker: str, shares: float, cost_basis: float) -> dict | None:
+async def update_holding(ticker: str, shares: float, cost_basis: float, user_id: str) -> dict | None:
     """Returns updated holding or None if not found."""
     try:
         return await _put(f"/holdings/{ticker}", {
             "shares": shares, "cost_basis": cost_basis,
-        })
+        }, headers=_auth(user_id))
     except Exception:
         return None
 
 
-async def delete_holding(ticker: str) -> bool:
+async def delete_holding(ticker: str, user_id: str) -> bool:
     try:
-        result = await _delete(f"/holdings/{ticker}")
+        result = await _delete(f"/holdings/{ticker}", headers=_auth(user_id))
         return result.get("ok", False)
     except Exception:
         return False
@@ -105,13 +133,13 @@ async def get_metrics(ticker: str) -> dict:
 
 # ── Portfolio ─────────────────────────────────────────────────────────────────
 
-async def get_portfolio_summary() -> dict | None:
+async def get_portfolio_summary(user_id: str) -> dict | None:
     """
     Returns {total_value, portfolio_yield, holdings: [...]} or None.
     Each holding has: ticker, name, shares, cost_basis, price, change_pct,
                       market_value, allocation_pct, dividend_yield, annual_income.
     """
     try:
-        return await _get("/portfolio/summary")
+        return await _get("/portfolio/summary", headers=_auth(user_id))
     except Exception:
         return None

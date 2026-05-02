@@ -4,6 +4,7 @@ import flet as ft
 import flet.canvas as canvas
 from my_flet_app import routes, theme as t
 from my_flet_app.components.bottom_nav import build_nav_bar
+from my_flet_app.components.app_bar import build_app_bar
 from my_flet_app.api_client import get_portfolio_summary
 
 _CHART_COLORS = [
@@ -67,11 +68,13 @@ def _spinner() -> ft.Container:
     )
 
 
-def _build_sector_section() -> ft.Column:
-    pie_sections = [(35, t.PRIMARY_CONTAINER), (50, t.GREEN), (15, t.OUTLINE_VARIANT)]
+def _build_sector_section(sector_alloc: list[dict]) -> ft.Column:
+    pie_sections = [
+        (item["allocation_pct"], _CHART_COLORS[i % len(_CHART_COLORS)])
+        for i, item in enumerate(sector_alloc)
+    ]
     pie_size = 140.0
     pie_chart = _build_donut_canvas(pie_sections, pie_size, center_space_radius=0.0, gap_rad=0.03)
-    legend_items = [(t.PRIMARY_CONTAINER, "Tech", "35%"), (t.GREEN, "Finance", "50%"), (t.OUTLINE_VARIANT, "Energy", "15%")]
     legend_col = ft.Column(
         spacing=t.SM,
         controls=[
@@ -79,16 +82,20 @@ def _build_sector_section() -> ft.Column:
                 spacing=t.XS,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=10, height=10, bgcolor=c, border_radius=t.RADIUS_FULL),
-                    ft.Text(f"{label}  {pct}", size=12, color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY),
+                    ft.Container(width=10, height=10,
+                                 bgcolor=_CHART_COLORS[i % len(_CHART_COLORS)],
+                                 border_radius=t.RADIUS_FULL),
+                    ft.Text(
+                        f"{item['sector']}  {item['allocation_pct']:.1f}%",
+                        size=12, color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY,
+                    ),
                 ],
             )
-            for c, label, pct in legend_items
+            for i, item in enumerate(sector_alloc)
         ],
     )
     return ft.Column(
         spacing=t.MD,
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         controls=[
             _section_heading("Sector Allocation"),
             ft.Row(
@@ -254,16 +261,24 @@ def summary_view(page: ft.Page) -> ft.View:
         income_mode[0] = mode
         _render_income()
 
+    # ── Mutable sector section ────────────────────────────────────────────────
+    # Empty column takes zero space; populated in _load() when sector data arrives.
+    sector_col = ft.Column(spacing=0, controls=[])
+
     # ── Mutable total-return section ──────────────────────────────────────────
     return_col = ft.Column(spacing=t.MD, controls=[_spinner()])
 
     async def _load():
-        data = await get_portfolio_summary()
-        if data is None:
-            yield_text.value = "N/A"
-            portfolio_value_text.value = "Could not load portfolio data"
-            donut_container.content = ft.Text("No data", size=13, color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY)
-            income_col.controls = [ft.Text("No data", size=13, color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY)]
+        uid  = (page.session.store.get("user") or {}).get("id", "")
+        data = await get_portfolio_summary(uid)
+        if data is None or not data.get("holdings"):
+            no_assets = ft.Text("No assets yet — add holdings to get started.",
+                                size=13, color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY)
+            yield_text.value = "—"
+            portfolio_value_text.value = "No holdings in your portfolio."
+            donut_container.content = ft.Text("No assets", size=13, color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY)
+            income_col.controls = [no_assets]
+            return_col.controls = [ft.Text("No assets", size=13, color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY)]
             page.update()
             return
 
@@ -315,6 +330,19 @@ def summary_view(page: ft.Page) -> ft.View:
                 color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY,
             )
         legend_row.controls = []
+
+        # ── Sector allocation ─────────────────────────────────────────────────
+        sector_alloc = data.get("sector_allocation") or []
+        if sector_alloc:
+            sector_col.controls = [
+                ft.Container(
+                    padding=ft.padding.symmetric(horizontal=t.CONTAINER_MARGIN),
+                    content=_build_sector_section(sector_alloc),
+                ),
+                ft.Container(height=t.LG),
+            ]
+        else:
+            sector_col.controls = []
 
         # ── Income per asset ──────────────────────────────────────────────────
         income_items = [
@@ -416,46 +444,35 @@ def summary_view(page: ft.Page) -> ft.View:
 
     asyncio.create_task(_load())
 
-    app_bar_row = ft.Container(
-        padding=ft.padding.symmetric(horizontal=t.CONTAINER_MARGIN, vertical=t.MD),
-        bgcolor=t.SURFACE_CONTAINER_LOWEST,
-        content=ft.Row(
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                ft.Row(
+    app_bar_row = build_app_bar()
+
+    hero_card = ft.Row(
+        spacing=0,
+        controls=[
+            ft.Container(width=5),
+            ft.Container(
+                expand=True,
+                padding=ft.padding.all(t.LG),
+                bgcolor=t.PRIMARY_CONTAINER,
+                border_radius=t.RADIUS_LG,
+                content=ft.Column(
                     spacing=t.SM,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     controls=[
-                        ft.Icon(ft.Icons.PUSH_PIN_OUTLINED, size=20, color=t.ON_SURFACE),
-                        ft.Text("WealthShield", size=16, weight=ft.FontWeight.W_700, color=t.ON_SURFACE, font_family=t.FONT_FAMILY),
+                        ft.Text(
+                            "PORTFOLIO YIELD",
+                            size=11,
+                            weight=ft.FontWeight.W_600,
+                            color=t.ON_PRIMARY_CONTAINER,
+                            font_family=t.FONT_FAMILY,
+                            style=ft.TextStyle(letter_spacing=1.2),
+                        ),
+                        yield_text,
+                        portfolio_value_text,
                     ],
                 ),
-                ft.IconButton(ft.Icons.NOTIFICATIONS_OUTLINED, icon_color=t.ON_SURFACE, icon_size=22),
-            ],
-        ),
-    )
-
-    hero_card = ft.Container(
-        margin=ft.margin.symmetric(horizontal=t.CONTAINER_MARGIN),
-        padding=ft.padding.all(t.LG),
-        bgcolor=t.PRIMARY_CONTAINER,
-        border_radius=t.RADIUS_LG,
-        content=ft.Column(
-            spacing=t.SM,
-            controls=[
-                ft.Text(
-                    "PORTFOLIO YIELD",
-                    size=11,
-                    weight=ft.FontWeight.W_600,
-                    color=t.ON_PRIMARY_CONTAINER,
-                    font_family=t.FONT_FAMILY,
-                    style=ft.TextStyle(letter_spacing=1.2),
-                ),
-                yield_text,
-                portfolio_value_text,
-            ],
-        ),
+            ),
+            ft.Container(width=5),
+        ],
     )
 
     donut_section = ft.Column(
@@ -490,13 +507,12 @@ def summary_view(page: ft.Page) -> ft.View:
                 spacing=0,
                 controls=[
                     app_bar_row,
-                    ft.Container(height=t.MD),
+                    ft.Container(height=t.SM),
                     hero_card,
                     ft.Container(height=t.LG),
                     ft.Container(padding=ft.padding.symmetric(horizontal=t.CONTAINER_MARGIN), content=donut_section),
                     ft.Container(height=t.LG),
-                    ft.Container(padding=ft.padding.symmetric(horizontal=t.CONTAINER_MARGIN), content=_build_sector_section()),
-                    ft.Container(height=t.LG),
+                    sector_col,
                     ft.Container(padding=ft.padding.symmetric(horizontal=t.CONTAINER_MARGIN), content=income_section),
                     ft.Container(height=t.LG),
                     ft.Container(

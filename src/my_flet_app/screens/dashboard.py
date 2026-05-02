@@ -56,7 +56,7 @@ def dashboard_view(page: ft.Page) -> ft.View:
                                             font_family=t.FONT_FAMILY,
                                         ),
                                         ft.Text(
-                                            "WealthShield",
+                                            "Market Research",
                                             size=20,
                                             weight=ft.FontWeight.W_700,
                                             color=t.ON_SURFACE,

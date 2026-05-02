@@ -2,6 +2,7 @@ import asyncio
 import flet as ft
 from my_flet_app import routes, theme as t
 from my_flet_app.components.bottom_nav import build_nav_bar
+from my_flet_app.components.app_bar import build_app_bar
 from my_flet_app.api_client import get_quote, get_metrics
 
 _STATUS_MAP = {
@@ -114,7 +115,7 @@ def analysis_view(page: ft.Page, ticker: str = "MSFT") -> ft.View:
                     ],
                 ),
                 ft.Container(height=t.XS),
-                ft.Text("WealthShield Health Analysis: Based on trailing data "
+                ft.Text("Market Research Health Analysis: Based on trailing data "
                         "and current valuation metrics.",
                         size=12, color=t.ON_SURFACE_VARIANT,
                         font_family=t.FONT_FAMILY),
@@ -161,31 +162,7 @@ def analysis_view(page: ft.Page, ticker: str = "MSFT") -> ft.View:
                 expand=True,
                 spacing=0,
                 controls=[
-                    ft.Container(
-                        padding=ft.padding.symmetric(
-                            horizontal=t.CONTAINER_MARGIN, vertical=t.MD),
-                        bgcolor=t.SURFACE_CONTAINER_LOWEST,
-                        content=ft.Row(
-                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                            controls=[
-                                ft.Row(
-                                    spacing=t.SM,
-                                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                                    controls=[
-                                        ft.Icon(ft.Icons.PUSH_PIN_OUTLINED,
-                                                size=20, color=t.ON_SURFACE),
-                                        ft.Text("WealthShield", size=16,
-                                                weight=ft.FontWeight.W_700,
-                                                color=t.ON_SURFACE,
-                                                font_family=t.FONT_FAMILY),
-                                    ],
-                                ),
-                                ft.IconButton(ft.Icons.NOTIFICATIONS_OUTLINED,
-                                              icon_color=t.ON_SURFACE, icon_size=22),
-                            ],
-                        ),
-                    ),
+                    build_app_bar(),
                     ft.Container(
                         padding=ft.padding.symmetric(
                             horizontal=t.CONTAINER_MARGIN, vertical=t.MD),

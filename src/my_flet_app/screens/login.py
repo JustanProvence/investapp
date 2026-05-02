@@ -1,5 +1,8 @@
+import asyncio
 import flet as ft
 from my_flet_app import theme as t, routes
+from my_flet_app import api_client as api
+from my_flet_app.logo_b64 import LOGO_SRC, GOOGLE_LOGO_SRC
 
 
 def _divider_row() -> ft.Row:
@@ -22,26 +25,27 @@ def _divider_row() -> ft.Row:
     )
 
 
-def _oauth_button(label: str, logo_char: str, logo_bg: str, on_click) -> ft.Container:
+def _oauth_button(label: str, logo_char: str, logo_bg: str, on_click, logo_src: str = None) -> ft.Container:
+    logo = ft.Image(src=logo_src, width=22, height=22) if logo_src else ft.Container(
+        content=ft.Text(
+            logo_char,
+            size=11,
+            weight=ft.FontWeight.W_700,
+            color=t.ON_PRIMARY,
+            font_family=t.FONT_FAMILY,
+        ),
+        bgcolor=logo_bg,
+        border_radius=t.RADIUS_SM,
+        width=22,
+        height=22,
+        alignment=ft.Alignment(0, 0),
+    )
     return ft.Container(
         content=ft.Row(
             alignment=ft.MainAxisAlignment.CENTER,
             spacing=t.SM + 2,
             controls=[
-                ft.Container(
-                    content=ft.Text(
-                        logo_char,
-                        size=11,
-                        weight=ft.FontWeight.W_700,
-                        color=t.ON_PRIMARY,
-                        font_family=t.FONT_FAMILY,
-                    ),
-                    bgcolor=logo_bg,
-                    border_radius=t.RADIUS_SM,
-                    width=22,
-                    height=22,
-                    alignment=ft.Alignment(0, 0),
-                ),
+                logo,
                 ft.Text(
                     label,
                     size=14,
@@ -90,9 +94,34 @@ def login_view(page: ft.Page) -> ft.View:
         cursor_color=t.PRIMARY,
     )
 
+    error_text = ft.Text(
+        "",
+        color="#D32F2F",
+        size=13,
+        font_family=t.FONT_FAMILY,
+        visible=False,
+        text_align=ft.TextAlign.CENTER,
+    )
+
+    async def _do_login():
+        email = email_field.value.strip().lower()
+        if not email:
+            error_text.value = "Please enter your email address."
+            error_text.visible = True
+            page.update()
+            return
+        user = await api.login(email)
+        if user:
+            page.session.store.set("user", user)
+            page.session.store.set("theme_mode", user.get("theme_mode") or "light")
+            await page.push_route(routes.SUMMARY)
+        else:
+            error_text.value = "Email not recognised. Please try again."
+            error_text.visible = True
+            page.update()
+
     def on_login(_):
-        import asyncio
-        asyncio.create_task(page.push_route(routes.SUMMARY))
+        asyncio.create_task(_do_login())
 
     return ft.View(
         route=routes.LOGIN,
@@ -112,29 +141,18 @@ def login_view(page: ft.Page) -> ft.View:
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                             spacing=t.SM,
                             controls=[
-                                ft.Container(
-                                    content=ft.Icon(
-                                        ft.Icons.SHIELD_OUTLINED,
-                                        size=26,
-                                        color=t.ON_SURFACE,
-                                    ),
-                                    bgcolor=t.SURFACE_CONTAINER_LOWEST,
-                                    border_radius=t.RADIUS_LG,
-                                    width=56,
-                                    height=56,
-                                    alignment=ft.Alignment(0, 0),
-                                    shadow=ft.BoxShadow(
-                                        blur_radius=16,
-                                        color=t.with_alpha(t.PRIMARY_CONTAINER, 0.10),
-                                        offset=ft.Offset(0, 4),
-                                    ),
-                                ),
-                                ft.Text(
-                                    "WealthShield",
-                                    size=15,
-                                    weight=ft.FontWeight.W_600,
-                                    color=t.ON_SURFACE,
-                                    font_family=t.FONT_FAMILY,
+                                ft.Image(src=LOGO_SRC, width=56, height=56),
+                                ft.Column(
+                                    spacing=0,
+                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                    controls=[
+                                        ft.Text("Market", size=15, weight=ft.FontWeight.W_700,
+                                                color=t.ON_SURFACE, font_family=t.FONT_FAMILY,
+                                                text_align=ft.TextAlign.CENTER),
+                                        ft.Text("Research", size=15, weight=ft.FontWeight.W_500,
+                                                color=t.ON_SURFACE, font_family=t.FONT_FAMILY,
+                                                text_align=ft.TextAlign.CENTER),
+                                    ],
                                 ),
                             ],
                         ),
@@ -143,6 +161,7 @@ def login_view(page: ft.Page) -> ft.View:
                     # Headline
                     ft.Container(
                         padding=ft.padding.symmetric(horizontal=t.CONTAINER_MARGIN),
+                        alignment=ft.Alignment(0, 0),
                         content=ft.Column(
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                             spacing=t.SM,
@@ -182,30 +201,8 @@ def login_view(page: ft.Page) -> ft.View:
                             spacing=t.MD,
                             controls=[
                                 email_field,
-                                ft.Column(
-                                    spacing=t.XS,
-                                    controls=[
-                                        password_field,
-                                        ft.Row(
-                                            alignment=ft.MainAxisAlignment.END,
-                                            controls=[
-                                                ft.TextButton(
-                                                    "Forgot Password?",
-                                                    style=ft.ButtonStyle(
-                                                        color=t.ON_SURFACE_VARIANT,
-                                                        overlay_color=ft.Colors.TRANSPARENT,
-                                                        text_style=ft.TextStyle(
-                                                            size=13,
-                                                            font_family=t.FONT_FAMILY,
-                                                        ),
-                                                        padding=ft.padding.symmetric(horizontal=0),
-                                                    ),
-                                                    on_click=lambda _: None,
-                                                ),
-                                            ],
-                                        ),
-                                    ],
-                                ),
+                                password_field,
+                                error_text,
                                 ft.ElevatedButton(
                                     "Login  →",
                                     width=float("inf"),
@@ -229,74 +226,7 @@ def login_view(page: ft.Page) -> ft.View:
                                     "G",
                                     "#4285F4",
                                     lambda _: None,
-                                ),
-                                _oauth_button(
-                                    "Apple ID",
-                                    "",
-                                    t.PRIMARY,
-                                    lambda _: None,
-                                ),
-                            ],
-                        ),
-                    ),
-                    ft.Container(height=t.LG),
-                    # Sign-up link
-                    ft.Row(
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        controls=[
-                            ft.Text(
-                                "Don't have an account?  ",
-                                size=14,
-                                color=t.ON_SURFACE_VARIANT,
-                                font_family=t.FONT_FAMILY,
-                            ),
-                            ft.TextButton(
-                                "Sign Up",
-                                style=ft.ButtonStyle(
-                                    color=t.ON_SURFACE,
-                                    overlay_color=ft.Colors.TRANSPARENT,
-                                    padding=ft.padding.symmetric(horizontal=0),
-                                    text_style=ft.TextStyle(
-                                        size=14,
-                                        weight=ft.FontWeight.W_700,
-                                        font_family=t.FONT_FAMILY,
-                                    ),
-                                ),
-                                on_click=lambda _: None,
-                            ),
-                        ],
-                    ),
-                    ft.Container(height=t.LG),
-                    # Bottom "Precision Intelligence" branding peek
-                    ft.Container(
-                        height=72,
-                        margin=ft.margin.symmetric(horizontal=t.CONTAINER_MARGIN),
-                        border_radius=ft.border_radius.only(
-                            top_left=t.RADIUS_LG,
-                            top_right=t.RADIUS_LG,
-                        ),
-                        bgcolor=t.SURFACE_CONTAINER,
-                        padding=ft.padding.all(t.MD),
-                        content=ft.Row(
-                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                            controls=[
-                                ft.Text(
-                                    "Precision Intelligence",
-                                    size=12,
-                                    color=t.ON_SURFACE_VARIANT,
-                                    font_family=t.FONT_FAMILY,
-                                ),
-                                ft.Row(
-                                    spacing=4,
-                                    controls=[
-                                        ft.Container(
-                                            width=5, height=5,
-                                            bgcolor=t.OUTLINE_VARIANT,
-                                            border_radius=t.RADIUS_FULL,
-                                        )
-                                        for _ in range(3)
-                                    ],
+                                    logo_src=GOOGLE_LOGO_SRC,
                                 ),
                             ],
                         ),

@@ -70,13 +70,15 @@ class PortfolioHolding(BaseModel):
     allocation_pct: float | None  # % of total portfolio value
     dividend_yield: float | None  # % (e.g. 0.38 = 0.38%)
     annual_income: float | None   # estimated annual dividend income $
+    sector: str | None = None
 
 
 class SummaryResponse(BaseModel):
-    total_value: float | None
-    portfolio_yield: float | None       # weighted-average yield %
-    total_invested: float | None        # sum of shares × cost_basis
-    unrealized_gain: float | None       # current value − total invested
-    unrealized_pct: float | None        # unrealized gain as % of invested
-    estimated_annual_income: float | None  # projected annual dividends
-    holdings: list[PortfolioHolding]
+    total_value: float | None = None
+    portfolio_yield: float | None = None       # weighted-average yield %
+    total_invested: float | None = None        # sum of shares × cost_basis
+    unrealized_gain: float | None = None       # current value − total invested
+    unrealized_pct: float | None = None        # unrealized gain as % of invested
+    estimated_annual_income: float | None = None  # projected annual dividends
+    holdings: list[PortfolioHolding] = []
+    sector_allocation: list[dict] | None = None  # [{sector, allocation_pct}] sorted desc

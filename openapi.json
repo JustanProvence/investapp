@@ -1,0 +1,772 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "WealthShield API",
+        "version": "0.1.0"
+    },
+    "paths": {
+        "/holdings": {
+            "get": {
+                "tags": [
+                    "holdings"
+                ],
+                "summary": "List Holdings",
+                "operationId": "list_holdings_holdings_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/HoldingResponse"
+                                    },
+                                    "type": "array",
+                                    "title": "Response List Holdings Holdings Get"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "holdings"
+                ],
+                "summary": "Add Holding",
+                "operationId": "add_holding_holdings_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/HoldingCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HoldingResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/holdings/{ticker}": {
+            "put": {
+                "tags": [
+                    "holdings"
+                ],
+                "summary": "Update Holding",
+                "operationId": "update_holding_holdings__ticker__put",
+                "parameters": [
+                    {
+                        "name": "ticker",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Ticker"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/HoldingUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HoldingResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "holdings"
+                ],
+                "summary": "Delete Holding",
+                "operationId": "delete_holding_holdings__ticker__delete",
+                "parameters": [
+                    {
+                        "name": "ticker",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Ticker"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeleteResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/market/search": {
+            "get": {
+                "tags": [
+                    "market"
+                ],
+                "summary": "Search",
+                "operationId": "search_market_search_get",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "",
+                            "title": "Q"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/market/{ticker}/quote": {
+            "get": {
+                "tags": [
+                    "market"
+                ],
+                "summary": "Get Quote",
+                "operationId": "get_quote_market__ticker__quote_get",
+                "parameters": [
+                    {
+                        "name": "ticker",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Ticker"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/QuoteResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/market/{ticker}/metrics": {
+            "get": {
+                "tags": [
+                    "market"
+                ],
+                "summary": "Get Metrics",
+                "operationId": "get_metrics_market__ticker__metrics_get",
+                "parameters": [
+                    {
+                        "name": "ticker",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Ticker"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MetricsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/portfolio/summary": {
+            "get": {
+                "tags": [
+                    "portfolio"
+                ],
+                "summary": "Get Summary",
+                "operationId": "get_summary_portfolio_summary_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SummaryResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "DeleteResponse": {
+                "properties": {
+                    "ok": {
+                        "type": "boolean",
+                        "title": "Ok",
+                        "default": true
+                    }
+                },
+                "type": "object",
+                "title": "DeleteResponse"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "HoldingCreate": {
+                "properties": {
+                    "ticker": {
+                        "type": "string",
+                        "title": "Ticker"
+                    },
+                    "shares": {
+                        "type": "number",
+                        "title": "Shares"
+                    },
+                    "cost_basis": {
+                        "type": "number",
+                        "title": "Cost Basis"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "ticker",
+                    "shares",
+                    "cost_basis"
+                ],
+                "title": "HoldingCreate"
+            },
+            "HoldingResponse": {
+                "properties": {
+                    "ticker": {
+                        "type": "string",
+                        "title": "Ticker"
+                    },
+                    "shares": {
+                        "type": "number",
+                        "title": "Shares"
+                    },
+                    "cost_basis": {
+                        "type": "number",
+                        "title": "Cost Basis"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "ticker",
+                    "shares",
+                    "cost_basis"
+                ],
+                "title": "HoldingResponse"
+            },
+            "HoldingUpdate": {
+                "properties": {
+                    "shares": {
+                        "type": "number",
+                        "title": "Shares"
+                    },
+                    "cost_basis": {
+                        "type": "number",
+                        "title": "Cost Basis"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "shares",
+                    "cost_basis"
+                ],
+                "title": "HoldingUpdate"
+            },
+            "MetricResult": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "value": {
+                        "type": "string",
+                        "title": "Value"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "good",
+                            "warn",
+                            "bad"
+                        ],
+                        "title": "Status"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name",
+                    "value",
+                    "status",
+                    "description"
+                ],
+                "title": "MetricResult"
+            },
+            "MetricsResponse": {
+                "properties": {
+                    "ticker": {
+                        "type": "string",
+                        "title": "Ticker"
+                    },
+                    "issuer_ticker": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Issuer Ticker"
+                    },
+                    "metrics": {
+                        "items": {
+                            "$ref": "#/components/schemas/MetricResult"
+                        },
+                        "type": "array",
+                        "title": "Metrics"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "ticker",
+                    "metrics"
+                ],
+                "title": "MetricsResponse"
+            },
+            "PortfolioHolding": {
+                "properties": {
+                    "ticker": {
+                        "type": "string",
+                        "title": "Ticker"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "shares": {
+                        "type": "number",
+                        "title": "Shares"
+                    },
+                    "cost_basis": {
+                        "type": "number",
+                        "title": "Cost Basis"
+                    },
+                    "price": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Price"
+                    },
+                    "change_pct": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Change Pct"
+                    },
+                    "market_value": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Market Value"
+                    },
+                    "allocation_pct": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Allocation Pct"
+                    },
+                    "dividend_yield": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Dividend Yield"
+                    },
+                    "annual_income": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Annual Income"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "ticker",
+                    "name",
+                    "shares",
+                    "cost_basis",
+                    "price",
+                    "change_pct",
+                    "market_value",
+                    "allocation_pct",
+                    "dividend_yield",
+                    "annual_income"
+                ],
+                "title": "PortfolioHolding"
+            },
+            "QuoteResponse": {
+                "properties": {
+                    "ticker": {
+                        "type": "string",
+                        "title": "Ticker"
+                    },
+                    "price": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Price"
+                    },
+                    "change": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Change"
+                    },
+                    "change_pct": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Change Pct"
+                    },
+                    "prev_close": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Prev Close"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "exchange": {
+                        "type": "string",
+                        "title": "Exchange"
+                    },
+                    "currency": {
+                        "type": "string",
+                        "title": "Currency"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "ticker",
+                    "price",
+                    "change",
+                    "change_pct",
+                    "prev_close",
+                    "name",
+                    "exchange",
+                    "currency"
+                ],
+                "title": "QuoteResponse"
+            },
+            "SummaryResponse": {
+                "properties": {
+                    "total_value": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Total Value"
+                    },
+                    "portfolio_yield": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Portfolio Yield"
+                    },
+                    "total_invested": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Total Invested"
+                    },
+                    "unrealized_gain": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Unrealized Gain"
+                    },
+                    "unrealized_pct": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Unrealized Pct"
+                    },
+                    "estimated_annual_income": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Estimated Annual Income"
+                    },
+                    "holdings": {
+                        "items": {
+                            "$ref": "#/components/schemas/PortfolioHolding"
+                        },
+                        "type": "array",
+                        "title": "Holdings"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "total_value",
+                    "portfolio_yield",
+                    "total_invested",
+                    "unrealized_gain",
+                    "unrealized_pct",
+                    "estimated_annual_income",
+                    "holdings"
+                ],
+                "title": "SummaryResponse"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    },
+                    "input": {
+                        "title": "Input"
+                    },
+                    "ctx": {
+                        "type": "object",
+                        "title": "Context"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        }
+    }
+}

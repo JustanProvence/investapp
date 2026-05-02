@@ -220,6 +220,9 @@ __marimo__/
 # Linux venv (created in Docker/WSL)
 .venv-linux/
 
+# Runtime data (persistent but not version-controlled)
+data/
+
 # Shell and editor artifacts
 .bash_history
 .claude.json

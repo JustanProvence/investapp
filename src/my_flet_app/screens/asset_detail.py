@@ -1,6 +1,6 @@
 import flet as ft
 from my_flet_app import theme as t, routes
-from my_flet_app.data.fixtures import ASSETS
+ASSETS = []
 from my_flet_app.components.chip import category_chip, semantic_chip
 
 

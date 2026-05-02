@@ -2,10 +2,9 @@ import flet as ft
 from my_flet_app import theme as t
 
 _DESTINATIONS = [
-    ("Summary", ft.Icons.DASHBOARD_OUTLINED, ft.Icons.DASHBOARD),
-    ("Analysis", ft.Icons.SHOW_CHART, ft.Icons.SHOW_CHART),
+    ("Summary",  ft.Icons.DASHBOARD_OUTLINED,              ft.Icons.DASHBOARD),
     ("Holdings", ft.Icons.ACCOUNT_BALANCE_WALLET_OUTLINED, ft.Icons.ACCOUNT_BALANCE_WALLET),
-    ("Settings", ft.Icons.SETTINGS_OUTLINED, ft.Icons.SETTINGS),
+    ("Settings", ft.Icons.SETTINGS_OUTLINED,               ft.Icons.SETTINGS),
 ]
 
 

@@ -1,6 +1,7 @@
 import flet as ft
 from my_flet_app import theme as t, routes
-from my_flet_app.data.fixtures import ASSETS, PORTFOLIO
+ASSETS = []
+PORTFOLIO = {"total_value": 0.0, "daily_change": 0.0, "daily_change_pct": 0.0}
 from my_flet_app.components.investment_card import investment_card
 from my_flet_app.components.asset_list_item import asset_list_item
 from my_flet_app.components.bottom_nav import build_nav_bar

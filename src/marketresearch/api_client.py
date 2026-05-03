@@ -2,9 +2,10 @@
 Async HTTP client — all backend calls go through here.
 Screens import from this module only; nothing touches the API directly.
 """
+import os
 import httpx
 
-_BASE = "http://127.0.0.1:8000"
+_BASE = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 _TIMEOUT = 20.0
 
 

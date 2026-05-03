@@ -21,9 +21,9 @@ cleanup() {
 }
 trap cleanup SIGINT SIGTERM
 
-echo "Starting WealthShield API on http://127.0.0.1:8000 …"
+echo "Starting WealthShield API on http://0.0.0.0:8000 …"
 PYTHONPATH="$SCRIPT_DIR/api" "$UVICORN" main:app \
-  --host 127.0.0.1 --port 8000 \
+  --host 0.0.0.0 --port 8000 \
   --log-level warning &
 API_PID=$!
 

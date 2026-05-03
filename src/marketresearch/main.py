@@ -131,6 +131,29 @@ def main(page: ft.Page):
             r = page.route
             logged_in = bool(page.session.store.get("user"))
 
+            # OAuth callback — decode JWT, set session, redirect to summary
+            if r.startswith("/auth/callback/"):
+                import base64, json as _json
+                jwt_token = r[len("/auth/callback/"):]
+                try:
+                    payload_b64 = jwt_token.split(".")[1]
+                    payload_b64 += "=" * (4 - len(payload_b64) % 4)
+                    payload = _json.loads(base64.urlsafe_b64decode(payload_b64))
+                    user = {
+                        "id":         payload["sub"],
+                        "email":      payload["email"],
+                        "name":       payload.get("name", ""),
+                        "picture":    payload.get("picture", ""),
+                        "theme_mode": payload.get("theme_mode", "light"),
+                    }
+                    page.session.store.set("user", user)
+                    page.session.store.set("jwt_token", jwt_token)
+                    page.session.store.set("theme_mode", user["theme_mode"])
+                except Exception:
+                    pass
+                page.go(routes.SUMMARY)
+                return
+
             # Auth guard — unauthenticated users always land on login
             if not logged_in and r not in (routes.LOGIN, "/"):
                 page.go(routes.LOGIN)

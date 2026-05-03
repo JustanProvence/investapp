@@ -1,0 +1,23 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - --no-cache
+      - -t
+      - us-central1-docker.pkg.dev/marketresearch-495214/marketresearch/api:latest
+      - -f
+      - docker/api/Dockerfile
+      - .
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - -t
+      - us-central1-docker.pkg.dev/marketresearch-495214/marketresearch/ui:latest
+      - -f
+      - docker/ui/Dockerfile
+      - .
+
+images:
+  - us-central1-docker.pkg.dev/marketresearch-495214/marketresearch/api:latest
+  - us-central1-docker.pkg.dev/marketresearch-495214/marketresearch/ui:latest

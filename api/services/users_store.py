@@ -1,59 +1,64 @@
-import sqlite3
-from pathlib import Path
-
-_DB_PATH = Path(__file__).parents[2] / "data" / "holdings.db"
+from services.db import get_cursor
 
 
-def _connect() -> sqlite3.Connection:
-    conn = sqlite3.connect(_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def _migrate() -> None:
-    with _connect() as conn:
-        cols = [r[1] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
-        if "theme_mode" not in cols:
-            conn.execute("ALTER TABLE users ADD COLUMN theme_mode TEXT DEFAULT 'light'")
-
-
-_migrate()
+def init_db() -> None:
+    with get_cursor() as cur:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id         TEXT PRIMARY KEY,
+                email      TEXT UNIQUE NOT NULL,
+                name       TEXT NOT NULL,
+                picture    TEXT,
+                theme_mode TEXT DEFAULT 'light'
+            )
+        """)
 
 
 def get_by_id(user_id: str) -> dict | None:
-    with _connect() as conn:
-        row = conn.execute(
-            "SELECT id, email, name, picture, theme_mode FROM users WHERE id = ?",
+    with get_cursor() as cur:
+        cur.execute(
+            "SELECT id, email, name, picture, theme_mode FROM users WHERE id = %s",
             (user_id,),
-        ).fetchone()
+        )
+        row = cur.fetchone()
     return dict(row) if row else None
 
 
 def get_by_email(email: str) -> dict | None:
-    with _connect() as conn:
-        row = conn.execute(
-            "SELECT id, email, name, picture, theme_mode FROM users WHERE email = ?",
+    with get_cursor() as cur:
+        cur.execute(
+            "SELECT id, email, name, picture, theme_mode FROM users WHERE email = %s",
             (email,),
-        ).fetchone()
+        )
+        row = cur.fetchone()
     return dict(row) if row else None
 
 
 def set_theme_mode(user_id: str, mode: str) -> None:
-    with _connect() as conn:
-        conn.execute(
-            "UPDATE users SET theme_mode = ? WHERE id = ?",
+    with get_cursor() as cur:
+        cur.execute(
+            "UPDATE users SET theme_mode = %s WHERE id = %s",
             (mode if mode in ("light", "dark") else "light", user_id),
         )
 
 
 def upsert(user_id: str, email: str, name: str, picture: str | None = None) -> dict:
-    with _connect() as conn:
-        conn.execute(
+    existing = get_by_email(email)
+    if existing:
+        with get_cursor() as cur:
+            cur.execute(
+                "UPDATE users SET name = %s, picture = %s WHERE email = %s",
+                (name, picture, email),
+            )
+        return get_by_id(existing["id"])
+
+    with get_cursor() as cur:
+        cur.execute(
             """
-            INSERT INTO users (id, email, name, picture) VALUES (?, ?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET email=excluded.email,
-                                          name=excluded.name,
-                                          picture=excluded.picture
+            INSERT INTO users (id, email, name, picture) VALUES (%s, %s, %s, %s)
+            ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email,
+                                           name  = EXCLUDED.name,
+                                           picture = EXCLUDED.picture
             """,
             (user_id, email, name, picture),
         )
@@ -61,8 +66,9 @@ def upsert(user_id: str, email: str, name: str, picture: str | None = None) -> d
 
 
 def get_first() -> dict | None:
-    with _connect() as conn:
-        row = conn.execute(
+    with get_cursor() as cur:
+        cur.execute(
             "SELECT id, email, name, picture, theme_mode FROM users LIMIT 1"
-        ).fetchone()
+        )
+        row = cur.fetchone()
     return dict(row) if row else None

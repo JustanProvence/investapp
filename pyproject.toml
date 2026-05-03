@@ -1,10 +1,8 @@
 [project]
-name = "my-flet-app"
+name = "marketresearch"
 version = "0.1.0"
 description = "Cross-platform Flet application"
-authors = [
-    {name = "dev",email = "prov24@gmail.com"}
-]
+authors = []
 readme = "README.md"
 requires-python = "^3.12"
 dependencies = [
@@ -19,10 +17,10 @@ dependencies = [
 
 
 [project.scripts]
-my-flet-app = "my_flet_app.main:main"
+marketresearch = "marketresearch.main:main"
 
 [tool.poetry]
-packages = [{include = "my_flet_app", from = "src"}]
+packages = [{include = "marketresearch", from = "src"}]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

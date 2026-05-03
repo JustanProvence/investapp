@@ -1,22 +1,22 @@
 import asyncio
 import flet as ft
-from my_flet_app import routes, theme as t
-from my_flet_app import api_client
-from my_flet_app.screens.login import login_view
-from my_flet_app.screens.dashboard import dashboard_view
-from my_flet_app.screens.asset_detail import asset_detail_view
-from my_flet_app.screens.summary import summary_view
-from my_flet_app.screens.analysis import analysis_view
-from my_flet_app.screens.holdings import holdings_view, add_ticker_view, update_holding_view, ticker_detail_view
+from marketresearch import routes, theme as t
+from marketresearch import api_client
+from marketresearch.screens.login import login_view
+from marketresearch.screens.dashboard import dashboard_view
+from marketresearch.screens.asset_detail import asset_detail_view
+from marketresearch.screens.summary import summary_view
+from marketresearch.screens.holdings import holdings_view, add_ticker_view, update_holding_view, ticker_detail_view
+from marketresearch.screens.watchlist import watchlist_view, add_watchlist_view, watchlist_ticker_view
 
 
 def _settings_view(page):
     import asyncio
-    from my_flet_app.components.bottom_nav import build_nav_bar
-    from my_flet_app.components.app_bar import build_app_bar
+    from marketresearch.components.bottom_nav import build_nav_bar
+    from marketresearch.components.app_bar import build_app_bar
 
     def on_nav(e):
-        dest = [routes.SUMMARY, routes.HOLDINGS, routes.SETTINGS]
+        dest = [routes.SUMMARY, routes.HOLDINGS, routes.ANALYSIS, routes.SETTINGS]
         asyncio.create_task(page.push_route(dest[int(e.data)]))
 
     async def on_logout(_):
@@ -37,7 +37,7 @@ def _settings_view(page):
         route=routes.SETTINGS,
         bgcolor=t.BACKGROUND,
         padding=0,
-        navigation_bar=build_nav_bar(2, on_nav),
+        navigation_bar=build_nav_bar(3, on_nav),
         controls=[
             ft.Column(
                 expand=True,
@@ -45,7 +45,7 @@ def _settings_view(page):
                 alignment=ft.MainAxisAlignment.START,
                 spacing=0,
                 controls=[
-                    build_app_bar(),
+                    build_app_bar(page),
                     ft.Container(height=t.XL),
                     ft.Icon(ft.Icons.SETTINGS_OUTLINED, size=48, color=t.OUTLINE),
                     ft.Container(height=t.SM),
@@ -141,7 +141,12 @@ def main(page: ft.Page):
             elif r == routes.SUMMARY or r == routes.DASHBOARD:
                 page.views.append(summary_view(page))
             elif r == routes.ANALYSIS:
-                page.views.append(analysis_view(page))
+                page.views.append(watchlist_view(page))
+            elif r == routes.ANALYSIS_ADD:
+                page.views.append(add_watchlist_view(page))
+            elif r.startswith(routes.ANALYSIS_TICKER + "/"):
+                ticker_id = r.split("/")[-1]
+                page.views.append(watchlist_ticker_view(page, ticker_id))
             elif r == routes.HOLDINGS:
                 page.views.append(holdings_view(page))
             elif r == routes.HOLDINGS_ADD:
@@ -179,4 +184,6 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.run(main, view=ft.AppView.WEB_BROWSER, port=8550, web_renderer=ft.WebRenderer.CANVAS_KIT, no_cdn=True, assets_dir="my_flet_app/assets")
+    import os as _os
+    _assets = _os.path.join(_os.path.dirname(__file__), "assets")
+    ft.run(main, view=ft.AppView.WEB_BROWSER, port=8550, web_renderer=ft.WebRenderer.CANVAS_KIT, no_cdn=True, assets_dir=_assets)

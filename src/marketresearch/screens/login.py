@@ -1,8 +1,8 @@
 import asyncio
 import flet as ft
-from my_flet_app import theme as t, routes
-from my_flet_app import api_client as api
-from my_flet_app.logo_b64 import LOGO_SRC, GOOGLE_LOGO_SRC
+from marketresearch import theme as t, routes
+from marketresearch import api_client as api
+from marketresearch.logo_b64 import LOGO_SRC, LOGO_SRC_DARK, GOOGLE_LOGO_SRC, GOOGLE_LOGO_SRC_DARK
 
 
 def _divider_row() -> ft.Row:
@@ -64,6 +64,11 @@ def _oauth_button(label: str, logo_char: str, logo_bg: str, on_click, logo_src: 
 
 
 def login_view(page: ft.Page) -> ft.View:
+    theme_mode = page.session.store.get("theme_mode") or str(page.platform_brightness.value if page.platform_brightness else "light")
+    is_dark = theme_mode == "dark"
+    logo_src = LOGO_SRC_DARK if is_dark else LOGO_SRC
+    google_logo_src = GOOGLE_LOGO_SRC_DARK if is_dark else GOOGLE_LOGO_SRC
+
     email_field = ft.TextField(
         label="Email Address",
         hint_text="name@company.com",
@@ -141,7 +146,7 @@ def login_view(page: ft.Page) -> ft.View:
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                             spacing=t.SM,
                             controls=[
-                                ft.Image(src=LOGO_SRC, width=56, height=56),
+                                ft.Image(src=logo_src, width=56, height=56),
                                 ft.Column(
                                     spacing=0,
                                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -226,7 +231,7 @@ def login_view(page: ft.Page) -> ft.View:
                                     "G",
                                     "#4285F4",
                                     lambda _: None,
-                                    logo_src=GOOGLE_LOGO_SRC,
+                                    logo_src=google_logo_src,
                                 ),
                             ],
                         ),

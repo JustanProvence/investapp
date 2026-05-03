@@ -1,5 +1,5 @@
 import flet as ft
-from my_flet_app import theme as t
+from marketresearch import theme as t
 
 
 def category_chip(label: str) -> ft.Container:

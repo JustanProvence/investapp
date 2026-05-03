@@ -1,11 +1,11 @@
 import asyncio
 import flet as ft
-from my_flet_app import routes, theme as t, api_client
-from my_flet_app.components.bottom_nav import build_nav_bar
-from my_flet_app.components.app_bar import build_app_bar
+from marketresearch import routes, theme as t, api_client
+from marketresearch.components.bottom_nav import build_nav_bar
+from marketresearch.components.app_bar import build_app_bar
 
 _QUICK_CHIPS = ["OVL", "QQQI", "GPIQ", "O", "BTCI", "SGOV"]
-_NAV_DEST    = [routes.SUMMARY, routes.HOLDINGS, routes.SETTINGS]
+_NAV_DEST    = [routes.SUMMARY, routes.HOLDINGS, routes.ANALYSIS, routes.SETTINGS]
 
 _STATUS_MAP = {
     "good": (ft.Icons.CHECK_CIRCLE, t.GREEN,   t.GREEN_BG),
@@ -245,7 +245,7 @@ def holdings_view(page: ft.Page) -> ft.View:
                 expand=True,
                 spacing=0,
                 controls=[
-                    build_app_bar(),
+                    build_app_bar(page),
                     ft.Container(
                         padding=ft.padding.only(
                             left=t.CONTAINER_MARGIN, right=t.CONTAINER_MARGIN,
@@ -437,31 +437,6 @@ def ticker_detail_view(page: ft.Page, holding_id: str) -> ft.View:
                         padding=ft.padding.symmetric(horizontal=t.CONTAINER_MARGIN),
                         content=metrics_col,
                     ),
-                    ft.Container(
-                        margin=ft.margin.symmetric(
-                            horizontal=t.CONTAINER_MARGIN, vertical=t.MD,
-                        ),
-                        content=ft.ElevatedButton(
-                            content=ft.Row(
-                                alignment=ft.MainAxisAlignment.CENTER,
-                                spacing=t.SM,
-                                controls=[
-                                    ft.Icon(ft.Icons.DOWNLOAD_OUTLINED,
-                                            color=t.ON_PRIMARY, size=18),
-                                    ft.Text("Download Detailed PDF",
-                                            color=t.ON_PRIMARY, size=14,
-                                            weight=ft.FontWeight.W_600,
-                                            font_family=t.FONT_FAMILY),
-                                ],
-                            ),
-                            width=float("inf"), height=52,
-                            bgcolor=t.PRIMARY, elevation=0,
-                            style=ft.ButtonStyle(
-                                shape=ft.RoundedRectangleBorder(radius=t.RADIUS_MD),
-                            ),
-                            on_click=lambda _: None,
-                        ),
-                    ),
                     ft.Container(height=t.MD),
                 ],
             ),
@@ -472,6 +447,13 @@ def ticker_detail_view(page: ft.Page, holding_id: str) -> ft.View:
 # ── Add Ticker ────────────────────────────────────────────────────────────────
 
 def add_ticker_view(page: ft.Page) -> ft.View:
+    prefill_ticker  = page.session.store.get("holdings_prefill_ticker") or ""
+    from_watchlist  = bool(page.session.store.get("holdings_from_watchlist"))
+    if prefill_ticker:
+        page.session.store.remove("holdings_prefill_ticker")
+    if from_watchlist:
+        page.session.store.remove("holdings_from_watchlist")
+
     selected_ticker = [None]
     chip_containers: list[ft.Container] = []
 
@@ -642,7 +624,7 @@ def add_ticker_view(page: ft.Page) -> ft.View:
         chip_containers.append(_make_chip(label))
 
     async def go_back(_):
-        await page.push_route(routes.HOLDINGS)
+        await page.push_route(routes.ANALYSIS if from_watchlist else routes.HOLDINGS)
 
     async def on_save(_):
         await _do_save()
@@ -674,11 +656,18 @@ def add_ticker_view(page: ft.Page) -> ft.View:
         uid    = (page.session.store.get("user") or {}).get("id", "")
         result = await api_client.add_holding(ticker, shares, cost, uid)
         if result:
-            await page.push_route(routes.HOLDINGS)
+            if from_watchlist:
+                await api_client.delete_watchlist_item(ticker, uid)
+                await page.push_route(routes.ANALYSIS)
+            else:
+                await page.push_route(routes.HOLDINGS)
         else:
             error_text.value = f"{ticker} already exists. Use Update to change it."
             error_text.visible = True
             page.update()
+
+    if prefill_ticker:
+        asyncio.create_task(_select_ticker(prefill_ticker))
 
     return ft.View(
         route=routes.HOLDINGS_ADD,

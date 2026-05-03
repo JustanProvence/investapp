@@ -28,7 +28,7 @@ PYTHONPATH="$SCRIPT_DIR/api" "$UVICORN" main:app \
 API_PID=$!
 
 echo "Starting WealthShield UI  on http://127.0.0.1:8550 …"
-PYTHONPATH="$SCRIPT_DIR/src" "$PYTHON" -m my_flet_app.main &
+PYTHONPATH="$SCRIPT_DIR/src" "$PYTHON" -m marketresearch.main &
 UI_PID=$!
 
 echo ""

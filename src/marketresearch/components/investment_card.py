@@ -1,6 +1,6 @@
 import flet as ft
-from my_flet_app import theme as t
-from my_flet_app.components.chip import semantic_chip
+from marketresearch import theme as t
+from marketresearch.components.chip import semantic_chip
 
 
 def investment_card(asset: dict, on_click=None) -> ft.Container:

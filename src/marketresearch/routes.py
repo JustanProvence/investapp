@@ -1,6 +1,8 @@
 LOGIN = "/"
 SUMMARY = "/summary"
 ANALYSIS = "/analysis"
+ANALYSIS_ADD = "/analysis/add"
+ANALYSIS_TICKER = "/analysis/ticker"
 HOLDINGS = "/holdings"
 HOLDINGS_ADD = "/holdings/add"
 HOLDINGS_UPDATE = "/holdings/update"
@@ -16,3 +18,6 @@ def ticker(ticker_id: str) -> str:
 
 def holding_update(ticker_id: str) -> str:
     return f"/holdings/update/{ticker_id}"
+
+def analysis_ticker(ticker_id: str) -> str:
+    return f"/analysis/ticker/{ticker_id}"

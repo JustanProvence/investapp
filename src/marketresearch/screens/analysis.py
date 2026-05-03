@@ -1,9 +1,9 @@
 import asyncio
 import flet as ft
-from my_flet_app import routes, theme as t
-from my_flet_app.components.bottom_nav import build_nav_bar
-from my_flet_app.components.app_bar import build_app_bar
-from my_flet_app.api_client import get_quote, get_metrics
+from marketresearch import routes, theme as t
+from marketresearch.components.bottom_nav import build_nav_bar
+from marketresearch.components.app_bar import build_app_bar
+from marketresearch.api_client import get_quote, get_metrics
 
 _STATUS_MAP = {
     "good": (ft.Icons.CHECK_CIRCLE, t.GREEN,   t.GREEN_BG),
@@ -162,7 +162,7 @@ def analysis_view(page: ft.Page, ticker: str = "MSFT") -> ft.View:
                 expand=True,
                 spacing=0,
                 controls=[
-                    build_app_bar(),
+                    build_app_bar(page),
                     ft.Container(
                         padding=ft.padding.symmetric(
                             horizontal=t.CONTAINER_MARGIN, vertical=t.MD),

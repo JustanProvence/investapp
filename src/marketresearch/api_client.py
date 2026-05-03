@@ -131,6 +131,30 @@ async def get_metrics(ticker: str) -> dict:
         return {"metrics": [], "issuer_ticker": None}
 
 
+# ── Watchlist ─────────────────────────────────────────────────────────────────
+
+async def get_watchlist(user_id: str) -> list[dict]:
+    try:
+        return await _get("/watchlist", headers=_auth(user_id))
+    except Exception:
+        return []
+
+
+async def add_watchlist_item(ticker: str, user_id: str) -> dict | None:
+    try:
+        return await _post("/watchlist", {"ticker": ticker}, headers=_auth(user_id))
+    except Exception:
+        return None
+
+
+async def delete_watchlist_item(ticker: str, user_id: str) -> bool:
+    try:
+        result = await _delete(f"/watchlist/{ticker}", headers=_auth(user_id))
+        return result.get("ok", False)
+    except Exception:
+        return False
+
+
 # ── Portfolio ─────────────────────────────────────────────────────────────────
 
 async def get_portfolio_summary(user_id: str) -> dict | None:

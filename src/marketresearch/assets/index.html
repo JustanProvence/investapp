@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Market Research">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Market Research">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon-192.png">
+
+  <link rel="icon" type="image/png" href="favicon.png" />
+
+  <title>Market Research</title>
+  <link rel="manifest" href="manifest.json">
+
+  <script>
+    var flet = {
+      pyodide: false,
+      multiView: false,
+      noCdn: false,
+      webSocketEndpoint: "/ws",
+      entrypointBaseUrl: "/",
+      assetBase: "/",
+      routeUrlStrategy: "path",
+      canvasKitBaseUrl: "/canvaskit/",
+      pyodideUrl: "/pyodide/pyodide.js",
+      webRenderer: "auto",
+      fontFallbackBaseUrl: "assets/fonts/",
+      appPackageUrl: "app.tar.gz"
+    }
+
+    flet.flutterAppLoaded = new Promise((resolve) => {
+      flet.flutterAppResolve = resolve;
+    });
+
+    flet.flutterAppLoaded.then((flutterApp) => {
+      console.log("Flutter app loaded");
+    });
+  </script>
+
+  <!-- fletAppConfig -->
+
+  <script src="python.js"></script>
+</head>
+
+<body>
+  <div id="loading">
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        inset: 0;
+        overflow: hidden;
+        position: fixed;
+        background-color: #f7f9fb;
+      }
+
+      #loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+        gap: 32px;
+        background-color: #f7f9fb;
+      }
+
+      #loading img {
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+        animation: breathe 1.6s ease-in-out infinite alternate;
+      }
+
+      #loading.init_done img {
+        animation: zoomout 0.3s ease-in forwards;
+        opacity: 0;
+      }
+
+      #loading.init_done .spinner-ring {
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      .spinner-ring {
+        width: 36px;
+        height: 36px;
+        border: 3px solid #e0e4ea;
+        border-top-color: #000000;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes breathe {
+        from { transform: scale(0.92); opacity: 0.8; }
+        to   { transform: scale(1.00); opacity: 1.0; }
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      @keyframes zoomout {
+        from { transform: scale(1.0); opacity: 1; }
+        to   { transform: scale(0.8); opacity: 0; }
+      }
+    </style>
+    <img src="logo.png" alt="Market Research" />
+    <div class="spinner-ring"></div>
+  </div>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

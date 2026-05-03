@@ -1,7 +1,7 @@
 import flet as ft
-from my_flet_app import theme as t, routes
+from marketresearch import theme as t, routes
 ASSETS = []
-from my_flet_app.components.chip import category_chip, semantic_chip
+from marketresearch.components.chip import category_chip, semantic_chip
 
 
 def _stat_card(label: str, value: str) -> ft.Container:

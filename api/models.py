@@ -31,6 +31,21 @@ class DeleteResponse(BaseModel):
     ok: bool = True
 
 
+# ── Watchlist ─────────────────────────────────────────────────────────────────
+
+class WatchlistCreate(BaseModel):
+    ticker: str
+
+    @field_validator("ticker")
+    @classmethod
+    def upper(cls, v: str) -> str:
+        return v.strip().upper()
+
+
+class WatchlistResponse(BaseModel):
+    ticker: str
+
+
 # ── Market ────────────────────────────────────────────────────────────────────
 
 class QuoteResponse(BaseModel):

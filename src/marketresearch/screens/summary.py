@@ -2,10 +2,10 @@ import asyncio
 import math
 import flet as ft
 import flet.canvas as canvas
-from my_flet_app import routes, theme as t
-from my_flet_app.components.bottom_nav import build_nav_bar
-from my_flet_app.components.app_bar import build_app_bar
-from my_flet_app.api_client import get_portfolio_summary
+from marketresearch import routes, theme as t
+from marketresearch.components.bottom_nav import build_nav_bar
+from marketresearch.components.app_bar import build_app_bar
+from marketresearch.api_client import get_portfolio_summary
 
 _CHART_COLORS = [
     t.PRIMARY_CONTAINER,
@@ -32,13 +32,18 @@ def _section_heading(title: str, right_widget=None) -> ft.Row:
     )
 
 
-def _build_donut_canvas(
+_PIE_SIZE = 140.0
+
+
+def _compute_donut_shapes(
     sections: list[tuple[float, str]],
     size: float,
     center_space_radius: float,
     gap_rad: float = 0.05,
-) -> canvas.Canvas:
+) -> list:
     total = sum(v for v, _ in sections)
+    if total == 0:
+        return []
     outer_r = size / 2 - 4
     inner_r = center_space_radius
     mid_r = (outer_r + inner_r) / 2
@@ -58,7 +63,7 @@ def _build_donut_canvas(
             paint=paint,
         ))
         angle += sweep
-    return canvas.Canvas(shapes=shapes, width=size, height=size)
+    return shapes
 
 
 def _spinner() -> ft.Container:
@@ -68,44 +73,32 @@ def _spinner() -> ft.Container:
     )
 
 
-def _build_sector_section(sector_alloc: list[dict]) -> ft.Column:
+def _populate_sector_controls(
+    sector_alloc: list[dict],
+    sector_canvas: canvas.Canvas,
+    sector_legend: ft.Column,
+) -> None:
     pie_sections = [
         (item["allocation_pct"], _CHART_COLORS[i % len(_CHART_COLORS)])
         for i, item in enumerate(sector_alloc)
     ]
-    pie_size = 140.0
-    pie_chart = _build_donut_canvas(pie_sections, pie_size, center_space_radius=0.0, gap_rad=0.03)
-    legend_col = ft.Column(
-        spacing=t.SM,
-        controls=[
-            ft.Row(
-                spacing=t.XS,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[
-                    ft.Container(width=10, height=10,
-                                 bgcolor=_CHART_COLORS[i % len(_CHART_COLORS)],
-                                 border_radius=t.RADIUS_FULL),
-                    ft.Text(
-                        f"{item['sector']}  {item['allocation_pct']:.1f}%",
-                        size=12, color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY,
-                    ),
-                ],
-            )
-            for i, item in enumerate(sector_alloc)
-        ],
-    )
-    return ft.Column(
-        spacing=t.MD,
-        controls=[
-            _section_heading("Sector Allocation"),
-            ft.Row(
-                alignment=ft.MainAxisAlignment.CENTER,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=t.LG,
-                controls=[pie_chart, legend_col],
-            ),
-        ],
-    )
+    sector_canvas.shapes = _compute_donut_shapes(pie_sections, _PIE_SIZE, center_space_radius=0.0, gap_rad=0.03)
+    sector_legend.controls = [
+        ft.Row(
+            spacing=t.XS,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Container(width=10, height=10,
+                             bgcolor=_CHART_COLORS[i % len(_CHART_COLORS)],
+                             border_radius=t.RADIUS_FULL),
+                ft.Text(
+                    f"{item['sector']}  {item['allocation_pct']:.1f}%",
+                    size=12, color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY,
+                ),
+            ],
+        )
+        for i, item in enumerate(sector_alloc)
+    ]
 
 
 def _build_forecast_section() -> ft.Column:
@@ -156,7 +149,7 @@ def _build_forecast_section() -> ft.Column:
 
 def summary_view(page: ft.Page) -> ft.View:
     def on_nav(e):
-        dest = [routes.SUMMARY, routes.HOLDINGS, routes.SETTINGS]
+        dest = [routes.SUMMARY, routes.HOLDINGS, routes.ANALYSIS, routes.SETTINGS]
         asyncio.create_task(page.push_route(dest[int(e.data)]))
 
     # ── Mutable hero card controls ────────────────────────────────────────────
@@ -175,10 +168,22 @@ def summary_view(page: ft.Page) -> ft.View:
         font_family=t.FONT_FAMILY,
     )
 
-    # ── Mutable donut section controls ────────────────────────────────────────
+    # ── Pre-created canvas controls (stable references so Flet diffs shapes correctly) ──
+    _holdings_canvas = canvas.Canvas(shapes=[], width=_PIE_SIZE, height=_PIE_SIZE)
+    _holdings_legend = ft.Column(spacing=t.SM, controls=[
+        ft.ProgressRing(width=20, height=20, color=t.PRIMARY)
+    ])
+    _sector_canvas = canvas.Canvas(shapes=[], width=_PIE_SIZE, height=_PIE_SIZE)
+    _sector_legend = ft.Column(spacing=t.SM, controls=[])
+
     donut_container = ft.Container(
         alignment=ft.Alignment(0, 0),
-        content=_spinner(),
+        content=ft.Row(
+            alignment=ft.MainAxisAlignment.CENTER,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=t.LG,
+            controls=[_holdings_canvas, _holdings_legend],
+        ),
     )
     legend_row = ft.Row(wrap=True, spacing=t.LG, controls=[])
 
@@ -276,7 +281,8 @@ def summary_view(page: ft.Page) -> ft.View:
                                 size=13, color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY)
             yield_text.value = "—"
             portfolio_value_text.value = "No holdings in your portfolio."
-            donut_container.content = ft.Text("No assets", size=13, color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY)
+            _holdings_canvas.shapes = []
+            _holdings_legend.controls = [ft.Text("No assets", size=13, color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY)]
             income_col.controls = [no_assets]
             return_col.controls = [ft.Text("No assets", size=13, color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY)]
             page.update()
@@ -289,7 +295,7 @@ def summary_view(page: ft.Page) -> ft.View:
         yield_text.value = f"{portfolio_yield:.2f}%"
         portfolio_value_text.value = f"Total portfolio value: ${total_value:,.0f}. Blended dividend yield across all holdings."
 
-        # ── Holdings pie (same layout as Sector Allocation) ───────────────────
+        # ── Holdings pie ──────────────────────────────────────────────────────
         if holdings:
             sections = []
             legend_items = []
@@ -299,45 +305,45 @@ def summary_view(page: ft.Page) -> ft.View:
                 sections.append((max(alloc, 0.1), color))
                 legend_items.append((color, h["ticker"], f"{alloc:.1f}%"))
 
-            pie_size  = 140.0
-            pie_chart = _build_donut_canvas(sections, pie_size, center_space_radius=0.0, gap_rad=0.03)
-            legend_col = ft.Column(
-                spacing=t.SM,
-                controls=[
-                    ft.Row(
-                        spacing=t.XS,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                        controls=[
-                            ft.Container(width=10, height=10, bgcolor=color,
-                                         border_radius=t.RADIUS_FULL),
-                            ft.Text(f"{tk}  {pct}", size=12,
-                                    color=t.ON_SURFACE_VARIANT,
-                                    font_family=t.FONT_FAMILY),
-                        ],
-                    )
-                    for color, tk, pct in legend_items
-                ],
-            )
-            donut_container.content = ft.Row(
-                alignment=ft.MainAxisAlignment.CENTER,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=t.LG,
-                controls=[pie_chart, legend_col],
-            )
+            _holdings_canvas.shapes = _compute_donut_shapes(sections, _PIE_SIZE, center_space_radius=0.0, gap_rad=0.03)
+            _holdings_legend.controls = [
+                ft.Row(
+                    spacing=t.XS,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        ft.Container(width=10, height=10, bgcolor=color,
+                                     border_radius=t.RADIUS_FULL),
+                        ft.Text(f"{tk}  {pct}", size=12,
+                                color=t.ON_SURFACE_VARIANT,
+                                font_family=t.FONT_FAMILY),
+                    ],
+                )
+                for color, tk, pct in legend_items
+            ]
         else:
-            donut_container.content = ft.Text(
-                "No holdings", size=13,
-                color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY,
-            )
+            _holdings_canvas.shapes = []
+            _holdings_legend.controls = [
+                ft.Text("No holdings", size=13,
+                        color=t.ON_SURFACE_VARIANT, font_family=t.FONT_FAMILY)
+            ]
         legend_row.controls = []
 
         # ── Sector allocation ─────────────────────────────────────────────────
         sector_alloc = data.get("sector_allocation") or []
         if sector_alloc:
+            _populate_sector_controls(sector_alloc, _sector_canvas, _sector_legend)
             sector_col.controls = [
                 ft.Container(
                     padding=ft.padding.symmetric(horizontal=t.CONTAINER_MARGIN),
-                    content=_build_sector_section(sector_alloc),
+                    content=ft.Column(spacing=t.MD, controls=[
+                        _section_heading("Sector Allocation"),
+                        ft.Row(
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                            spacing=t.LG,
+                            controls=[_sector_canvas, _sector_legend],
+                        ),
+                    ]),
                 ),
                 ft.Container(height=t.LG),
             ]
@@ -444,7 +450,7 @@ def summary_view(page: ft.Page) -> ft.View:
 
     asyncio.create_task(_load())
 
-    app_bar_row = build_app_bar()
+    app_bar_row = build_app_bar(page)
 
     hero_card = ft.Row(
         spacing=0,

@@ -1,4 +1,4 @@
-# WealthShield
+# Market Research
 
 A dividend-focused portfolio analysis tool built with [Flet](https://flet.dev) (UI) and [FastAPI](https://fastapi.tiangolo.com) (API). Tracks holdings, fetches live market data, and scores each position across health metrics such as yield, payout ratio, FCF coverage, leverage, and dividend growth.
 
